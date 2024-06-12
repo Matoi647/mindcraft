@@ -1,5 +1,6 @@
 import * as skills from '../library/skills.js';
 import settings from '../../../settings.js';
+import fs from 'fs/promises';
 
 function wrapExecution(func, timeout=-1, resume_name=null) {
     return async function (agent, ...args) {
@@ -233,5 +234,41 @@ export const actionsList = [
             agent.bot.emit('idle');  // to trigger the goal
             return 'Set goal: ' + agent.npc.data.curr_goal.name;
         }
+    },
+    {
+        name: '!build',
+        description: 'Build using json file converted from 3d models.',
+        perform: wrapExecution(async (agent) => {
+            // console.log('!build not implemented yet.')
+            const pos = agent.bot.entity.position;
+
+            const model_path = 'buildings/wooden_house_15.json';
+            const model_json = await fs.readFile(model_path, 'utf8');
+            let model = JSON.parse(model_json);
+            
+            // sort by YZX
+            model = model.sort((a, b) => {
+                if (a.y === b.y) {
+                    if (a.x === b.x) {
+                        return a.z - b.z;
+                    }
+                    return a.x - b.x;
+                }
+                return a.y - b.y;
+            });
+
+            let ymin = Math.min(...model.map(item => item.y));
+            console.log('ymin=', ymin);
+            
+            for(let i = 0; i < model.length; i++) {
+                let item = model[i];
+                let x = pos.x + item.x;
+                let y = pos.y + item.y - ymin;
+                let z = pos.z + item.z;
+                let blockType = item.block_name.replace('minecraft:', '');
+                console.log(`placed ${blockType} at (${x}, ${y}, ${z})`);
+                await skills.placeBlock(agent.bot, blockType, x, y, z);
+            }
+        })
     }
 ];
