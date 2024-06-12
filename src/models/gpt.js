@@ -8,7 +8,7 @@ export class GPT {
         let config = {};
         if (url)
             config.baseURL = url;
-
+        config.baseURL = 'https://api.openai-proxy.org/v1'
         if (hasKey('OPENAI_ORG_ID'))
             config.organization = getKey('OPENAI_ORG_ID');
 
